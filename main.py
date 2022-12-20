@@ -27,16 +27,16 @@ if DB['DATABASE'] not in dbs:
 
 influx.switch_database(DB['DATABASE'])
 
-def get_data():
+def get_data_of_disk(disk):
   # Get the space information for the disk
-  disk_usage = psutil.disk_usage('/')
+  disk_usage = psutil.disk_usage(disk)
 
   # Format the data as a JSON object
   json_body = [
       {
           "measurement": "disk_space",
           "tags": {
-              "disk": "/"
+              "disk": disk
           },
           "fields": {
               "total": disk_usage.total,
@@ -46,6 +46,8 @@ def get_data():
           }
       }
   ]
+
+  print(json_body)
   return json_body
 
 def store_data(data):
@@ -55,5 +57,8 @@ def store_data(data):
 
 if __name__ == '__main__':
   print('[Init application]: Disk monitoring.\n')
-  data = get_data()
-  store_data(data)
+  print('[Scanning]: Disks.\n')
+  
+  for disk in CONFIG['DISK_PATHS']:  
+    data = get_data_of_disk(disk)
+    store_data(data)
