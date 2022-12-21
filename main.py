@@ -1,6 +1,8 @@
-from dotenv import load_dotenv
-import psutil
 from influxdb import InfluxDBClient
+from dotenv import load_dotenv
+import logging
+import psutil
+import time
 import os
 
 load_dotenv()
@@ -9,6 +11,8 @@ load_dotenv()
 CONFIG = {
   'NUM_PATHS': os.environ.get('NUM_PATHS'),
   'DISK_PATHS': os.environ.get('DISK_PATHS').split(','),
+  'INTERVAL': int(os.environ.get('INTERVAL')),
+  'ERR_INTERVAL': int(os.environ.get('ERR_INTERVAL')),
 }
 
 DB = {
@@ -47,7 +51,6 @@ def get_data_of_disk(disk):
       }
   ]
 
-  print(json_body)
   return json_body
 
 def store_data(data):
@@ -56,9 +59,17 @@ def store_data(data):
     raise
 
 if __name__ == '__main__':
-  print('[Init application]: Disk monitoring.\n')
-  print('[Scanning]: Disks.\n')
-  
-  for disk in CONFIG['DISK_PATHS']:  
-    data = get_data_of_disk(disk)
-    store_data(data)
+  print('[Init application]: Disk monitoring.')
+  logging.info('[Scanning]: Disks.')
+
+  while(True):
+    try:
+      for disk in CONFIG['DISK_PATHS']:  
+        data = get_data_of_disk(disk)
+        store_data(data)
+      print('[Data stored]')
+      time.sleep(CONFIG['INTERVAL'])
+    except Exception as err:
+      logging.error('[error] saving disk path.')
+      time.sleep(CONFIG['ERR_INTERVAL'])
+
