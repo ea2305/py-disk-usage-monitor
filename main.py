@@ -1,10 +1,10 @@
 from influxdb import InfluxDBClient
 from dotenv import load_dotenv
+from datetime import datetime
 import logging
 import psutil
 import time
 import os
-
 load_dotenv()
 
 # ENV variables
@@ -31,10 +31,10 @@ if DB['DATABASE'] not in dbs:
 
 influx.switch_database(DB['DATABASE'])
 
-def get_data_of_disk(disk):
+def get_data_of_disk(disk, dtime):
   # Get the space information for the disk
   disk_usage = psutil.disk_usage(disk)
-
+  
   # Format the data as a JSON object
   json_body = [
       {
@@ -47,7 +47,8 @@ def get_data_of_disk(disk):
               "used": disk_usage.used,
               "free": disk_usage.free,
               "percent": disk_usage.percent
-          }
+          },
+          "time": dtime
       }
   ]
 
@@ -64,12 +65,15 @@ if __name__ == '__main__':
 
   while(True):
     try:
+      dt = datetime.now()
+      dtime = int(datetime.timestamp(dt))
       for disk in CONFIG['DISK_PATHS']:  
-        data = get_data_of_disk(disk)
+        data = get_data_of_disk(disk, dtime)
         store_data(data)
+
       print('[Data stored]')
       time.sleep(CONFIG['INTERVAL'])
     except Exception as err:
-      logging.error('[error] saving disk path.')
+      logging.error(f'[error] saving disk path. {err}')
       time.sleep(CONFIG['ERR_INTERVAL'])
 
