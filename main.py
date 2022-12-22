@@ -49,7 +49,7 @@ def get_data_of_disk(disk, dtime):
 
 def store_data(data):
   # Write the data to the database
-  if influx.write_points(data) != True:
+  if influx.write_points(data, time_precision='s') != True:
     raise
 
 if __name__ == '__main__':
